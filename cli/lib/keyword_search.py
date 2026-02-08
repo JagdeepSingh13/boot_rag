@@ -88,6 +88,36 @@ class InvertedIndex:
             self.__add_document(doc_id, f"{movie['title']} {movie['description']}")
             self.docmap[doc_id] = movie
 
+    def bm25(self, doc_id, term):
+        bm25_tf = self.get_bm25_tf(doc_id, term)
+        bm25_idf = self.get_bm25_idf(term)
+        return bm25_tf * bm25_idf
+    
+    def bm25_search(self, query, limit):
+        tokens = tokenize_text(query)
+        scores = {}
+
+        for doc_id in self.docmap:
+            score = 0
+            for tok in tokens:
+                score += self.bm25(doc_id, tok)
+            scores[doc_id] = score
+
+        sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+
+        results = sorted_scores[:limit]
+        format_res = []
+        for doc_id, score in results:
+            title = self.docmap[doc_id]['title']
+            format_res.append(
+                {
+                    "doc_id": doc_id,
+                    "title": title,
+                    "score": score
+                }
+            )
+        return format_res
+
     def save(self):
         os.makedirs(CACHE_PATH, exist_ok=True)
         with open(self.index_path, 'wb') as f:
@@ -108,6 +138,11 @@ class InvertedIndex:
             self.term_frequencies = pickle.load(f)
         with open(self.doc_lengths_path, 'rb') as f:
             self.doc_lengths = pickle.load(f)
+
+def bm25_search_command(query, limit):
+    idx = InvertedIndex()
+    idx.load()
+    return idx.bm25_search(query, limit)
 
 def tfidf_command(doc_id, term):
     idx = InvertedIndex()

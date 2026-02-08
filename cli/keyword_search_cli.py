@@ -3,7 +3,7 @@
 # uv sync
 
 import argparse
-from lib.keyword_search import search_command, build_command, tf_command, idf_command, tfidf_command, bm25_idf_command, bm25_tf_command
+from lib.keyword_search import search_command, build_command, tf_command, idf_command, tfidf_command, bm25_idf_command, bm25_tf_command, bm25_search_command
 from lib.search_utils import BM25_K1, BM25_B
 
 
@@ -39,6 +39,10 @@ def main() -> None:
     tfidf_parser.add_argument("doc_id", type=int, help="Document Id")
     tfidf_parser.add_argument("term", type=str, help="term")
 
+    bm25search_parser = subparsers.add_parser("bm25search", help="Search movies using full BM25 scoring")
+    bm25search_parser.add_argument("query", type=str, help="Search query")
+    bm25search_parser.add_argument("limit", type=int, help="Search query")
+
     args = parser.parse_args()
 
     match args.command:
@@ -59,6 +63,10 @@ def main() -> None:
             bm25_idf_command(args.term)
         case "bm25tf":
             bm25_tf_command(args.doc_id, args.term, args.k1, args.b)
+        case "bm25search":
+            results = bm25_search_command(args.query, args.limit)
+            for idx, res in enumerate(results):
+                print(f"{idx} {res['doc_id']} {res['title']} {res['score']:.2f}")
         case _:
             parser.print_help()
 
