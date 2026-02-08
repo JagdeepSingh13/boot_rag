@@ -3,7 +3,7 @@
 # uv sync
 
 import argparse
-from lib.keyword_search import search_command, build_command
+from lib.keyword_search import search_command, build_command, tf_command
 
 
 def main() -> None:
@@ -16,6 +16,10 @@ def main() -> None:
 
     build_parser = subparsers.add_parser("build", help="Build the inverted index cache")
 
+    tf_parser = subparsers.add_parser("tf", help="find TF")
+    tf_parser.add_argument("doc_id", type=int, help="Document Id")
+    tf_parser.add_argument("term", type=str, help="Document term")
+
     args = parser.parse_args()
 
     match args.command:
@@ -26,6 +30,8 @@ def main() -> None:
                 print(f"{i} {re['title']}")
         case "build":
             build_command()
+        case "tf":
+            tf_command(args.doc_id, args.term)
         case _:
             parser.print_help()
 
