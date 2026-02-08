@@ -1,4 +1,4 @@
-from lib.search_utils import load_movies, load_stopwords, CACHE_PATH
+from lib.search_utils import load_movies, load_stopwords, CACHE_PATH, BM25_K1
 import string
 from nltk.stem import PorterStemmer
 from collections import defaultdict, Counter
@@ -32,6 +32,10 @@ class InvertedIndex:
         if len(token) != 1:
             raise ValueError("can only have 1 token")
         return self.term_frequencies[doc_id][token[0]]
+    
+    def get_bm25_tf(self, doc_id, term, k1=BM25_K1):
+        tf = self.get_tf(doc_id, term)
+        return (tf * (k1 + 1)) / (tf + k1)
 
     def get_idf(self, term):
         token = tokenize_text(term)
@@ -43,11 +47,21 @@ class InvertedIndex:
 
         return math.log((doc_count + 1) / (term_doc_count + 1))
     
+    def get_bm25_idf(self, term: str) -> float:
+        token = tokenize_text(term)
+        if len(token) != 1:
+            raise ValueError("can only have 1 token")
+        token = token[0]
+        doc_count = len(self.docmap)
+        term_doc_count = len(self.index[token])
+
+        return math.log((doc_count - term_doc_count + 0.5) / (term_doc_count + 0.5) + 1)
+
     def get_tfidf(self, doc_id, term):
         tf = self.get_tf(doc_id, term)
         idf = self.get_idf(term)
         return tf * idf
-
+    
     def build(self):
         movies = load_movies()
         for movie in movies:
@@ -84,10 +98,22 @@ def idf_command(term):
     idf = idx.get_idf(term)
     print(f"Inverse document frequency of '{term}': {idf:.2f}")
 
+def bm25_idf_command(term):
+    idx = InvertedIndex()
+    idx.load()
+    bm_idf = idx.get_bm25_idf(term)
+    print(f"BM25 IDF score of '{term}': {bm_idf:.2f}")
+
 def tf_command(doc_id, term):
     idx = InvertedIndex()
     idx.load()
     print(idx.get_tf(doc_id, term))
+
+def bm25_tf_command(doc_id, term, k1=BM25_K1):
+    idx = InvertedIndex()
+    idx.load()
+    bm25tf = idx.get_bm25_tf(doc_id, term, k1)
+    print(f"BM25 TF score of '{term}' in document '{doc_id}': {bm25tf:.2f}")
  
 def build_command():
     idx = InvertedIndex()

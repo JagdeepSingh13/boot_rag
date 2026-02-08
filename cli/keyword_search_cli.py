@@ -3,7 +3,8 @@
 # uv sync
 
 import argparse
-from lib.keyword_search import search_command, build_command, tf_command, idf_command, tfidf_command
+from lib.keyword_search import search_command, build_command, tf_command, idf_command, tfidf_command, bm25_idf_command, bm25_tf_command
+from lib.search_utils import BM25_K1
 
 
 def main() -> None:
@@ -20,8 +21,18 @@ def main() -> None:
     tf_parser.add_argument("doc_id", type=int, help="Document Id")
     tf_parser.add_argument("term", type=str, help="Document term")
 
+    bm25_tf_parser = subparsers.add_parser(
+    "bm25tf", help="Get BM25 TF score for a given document ID and term"
+    )
+    bm25_tf_parser.add_argument("doc_id", type=int, help="Document ID")
+    bm25_tf_parser.add_argument("term", type=str, help="Term to get BM25 TF score for")
+    bm25_tf_parser.add_argument("k1", type=float, nargs='?', default=BM25_K1, help="Tunable BM25 K1 parameter")
+
     idf_parser = subparsers.add_parser("idf", help="find IDF")
     idf_parser.add_argument("term", type=str, help="term for IDF")
+
+    bmidf_parser = subparsers.add_parser("bmidf", help="find BM-IDF")
+    bmidf_parser.add_argument("term", type=str, help="term for BM-IDF")
 
     tfidf_parser = subparsers.add_parser("tfidf", help="find TF-IDF")
     tfidf_parser.add_argument("doc_id", type=int, help="Document Id")
@@ -43,6 +54,10 @@ def main() -> None:
             idf_command(args.term)
         case "tfidf":
             tfidf_command(args.doc_id, args.term)
+        case "bmidf":
+            bm25_idf_command(args.term)
+        case "bm25tf":
+            bm25_tf_command(args.doc_id, args.term, args.k1)
         case _:
             parser.print_help()
 
