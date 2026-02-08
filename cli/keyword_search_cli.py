@@ -3,7 +3,7 @@
 # uv sync
 
 import argparse
-from lib.keyword_search import search_command, build_command, tf_command
+from lib.keyword_search import search_command, build_command, tf_command, idf_command
 
 
 def main() -> None:
@@ -20,6 +20,9 @@ def main() -> None:
     tf_parser.add_argument("doc_id", type=int, help="Document Id")
     tf_parser.add_argument("term", type=str, help="Document term")
 
+    idf_parser = subparsers.add_parser("idf", help="find IDF")
+    idf_parser.add_argument("term", type=str, help="term for IDF")
+
     args = parser.parse_args()
 
     match args.command:
@@ -27,11 +30,13 @@ def main() -> None:
             print(f"Searching for: {args.query}")
             res = search_command(args.query, 5)
             for i, re in enumerate(res):
-                print(f"{i} {re['title']}")
+                print(f"{i} - {re['id']} {re['title']}")
         case "build":
             build_command()
         case "tf":
             tf_command(args.doc_id, args.term)
+        case "idf":
+            idf_command(args.term)
         case _:
             parser.print_help()
 
